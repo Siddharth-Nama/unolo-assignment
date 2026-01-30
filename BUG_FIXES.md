@@ -11,3 +11,8 @@
 - **Location:** `backend/routes/checkin.js`, Line 57
 - **Issue:** The INSERT SQL query attempted to write to columns `lat` and `lng`, but the database schema defines them as `latitude` and `longitude`. This caused an SQL error (500 Internal Server Error) upon submission.
 - **Fix:** Corrected the column names in the INSERT statement to match the schema.
+
+## 3. Dashboard SQL Syntax Error (Backend)
+- **Location:** `backend/routes/dashboard.js`, Line 80
+- **Issue:** The query used MySQL-specific functions `DATE_SUB` and `NOW()`, which are not supported in SQLite. This caused the Employee Dashboard to crash or return error 500.
+- **Fix:** Replaced with SQLite equivalent `datetime('now', '-7 days')`.
