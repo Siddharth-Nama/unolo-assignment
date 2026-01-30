@@ -21,3 +21,8 @@
 - **Location:** `frontend/src/pages/History.jsx`, Line 45
 - **Issue:** The component attempted to call `.reduce()` on the `checkins` state variable which was initialized to `null`. This code executed before the loading state check, causing a runtime crash on the initial render.
 - **Fix:** Added a fallback `(checkins || [])` to ensure `.reduce()` is always called on an array.
+
+## 5. Incorrect API Status Code (Backend)
+- **Location:** `backend/routes/checkin.js`, Line 30
+- **Issue:** The API returned status 200 (OK) when `client_id` was missing, which is a validation error. This might mislead clients into thinking the request succeeded despite the `success: false` payload.
+- **Fix:** Changed the status code to 400 (Bad Request).
