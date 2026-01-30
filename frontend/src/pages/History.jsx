@@ -176,7 +176,7 @@ function History({ user }) {
                                         <td className="px-4 py-3 text-sm text-gray-600">
                                             {checkin.distance_from_client 
                                                 ? <span className={checkin.distance_from_client > 500 ? 'text-red-600 font-bold' : ''}>
-                                                    {Math.round(checkin.distance_from_client)}m
+                                                    {(checkin.distance_from_client / 1000).toFixed(2)} km
                                                   </span>
                                                 : '-'}
                                         </td>

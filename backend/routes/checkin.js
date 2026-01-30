@@ -86,9 +86,9 @@ router.post('/', authenticateToken, async (req, res) => {
             data: {
                 id: result.insertId,
                 message: 'Checked in successfully',
-                distance: Math.round(distance),
+                distance_from_client: Math.round(distance),
                 warning: warning,
-                warning_message: warning ? `Warning: You are ${Math.round(distance)}m away from the client location.` : null
+                warning_message: warning ? `Warning: You are ${(distance/1000).toFixed(2)}km away from the client location.` : null
             }
         });
     } catch (error) {

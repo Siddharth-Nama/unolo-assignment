@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import api from '../utils/api';
 
 function CheckIn({ user }) {
@@ -12,6 +12,35 @@ function CheckIn({ user }) {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [warning, setWarning] = useState('');
+
+    const calculateDistance = (lat1, lon1, lat2, lon2) => {
+        const R = 6371e3; // Earth's radius in meters
+        const phi1 = lat1 * Math.PI / 180;
+        const phi2 = lat2 * Math.PI / 180;
+        const deltaPhi = (lat2 - lat1) * Math.PI / 180;
+        const deltaLambda = (lon2 - lon1) * Math.PI / 180;
+
+        const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+                  Math.cos(phi1) * Math.cos(phi2) *
+                  Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+        
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return R * c; // Distance in meters
+    };
+
+    const currentDistance = useMemo(() => {
+        if (!selectedClient || !location) return null;
+        
+        const client = clients.find(c => c.id == selectedClient);
+        if (!client || !client.latitude || !client.longitude) return null;
+
+        const dist = calculateDistance(
+            location.latitude, location.longitude,
+            client.latitude, client.longitude
+        );
+        return dist;
+    }, [selectedClient, location, clients]);
 
     useEffect(() => {
         fetchData();
@@ -194,6 +223,12 @@ function CheckIn({ user }) {
                                     </option>
                                 ))}
                             </select>
+                            {currentDistance !== null && (
+                                <p className={`text-sm mt-1 ${currentDistance > 500 ? 'text-red-600' : 'text-gray-500'}`}>
+                                    Distance to site: <strong>{(currentDistance / 1000).toFixed(2)} km</strong>
+                                    {currentDistance > 500 && ' (Warning: Too far)'}
+                                </p>
+                            )}
                         </div>
 
                         <div className="mb-4">
