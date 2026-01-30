@@ -16,3 +16,8 @@
 - **Location:** `backend/routes/dashboard.js`, Line 80
 - **Issue:** The query used MySQL-specific functions `DATE_SUB` and `NOW()`, which are not supported in SQLite. This caused the Employee Dashboard to crash or return error 500.
 - **Fix:** Replaced with SQLite equivalent `datetime('now', '-7 days')`.
+
+## 4. Attendance History Crash (Frontend)
+- **Location:** `frontend/src/pages/History.jsx`, Line 45
+- **Issue:** The component attempted to call `.reduce()` on the `checkins` state variable which was initialized to `null`. This code executed before the loading state check, causing a runtime crash on the initial render.
+- **Fix:** Added a fallback `(checkins || [])` to ensure `.reduce()` is always called on an array.
