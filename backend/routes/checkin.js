@@ -30,6 +30,10 @@ router.post('/', authenticateToken, async (req, res) => {
         if (!client_id) {
             return res.status(400).json({ success: false, message: 'Client ID is required' });
         }
+        
+        if (latitude && isNaN(parseFloat(latitude)) || longitude && isNaN(parseFloat(longitude))) {
+             return res.status(400).json({ success: false, message: 'Invalid coordinates' });
+        }
 
         // Check if employee is assigned to this client
         const [assignments] = await pool.execute(

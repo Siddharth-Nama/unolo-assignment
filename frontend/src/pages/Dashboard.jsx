@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import api from '../utils/api';
 
 function Dashboard({ user }) {
@@ -44,6 +45,18 @@ function Dashboard({ user }) {
 
     // Manager Dashboard
     if (user.role === 'manager') {
+        // Prepare Chart Data: Count check-ins per employee
+        const chartData = stats?.today_checkins?.reduce((acc, checkin) => {
+            const employee = checkin.employee_name;
+            const existing = acc.find(item => item.name === employee);
+            if (existing) {
+                existing.visits += 1;
+            } else {
+                acc.push({ name: employee, visits: 1 });
+            }
+            return acc;
+        }, []) || [];
+
         return (
             <div>
                 <h2 className="text-2xl font-bold mb-6">Manager Dashboard</h2>
@@ -60,6 +73,29 @@ function Dashboard({ user }) {
                     <div className="bg-white p-6 rounded-lg shadow">
                         <h3 className="text-gray-500 text-sm">Today's Visits</h3>
                         <p className="text-3xl font-bold text-purple-600">{stats?.today_checkins?.length || 0}</p>
+                    </div>
+                </div>
+
+                {/* VISUALIZATION: Team Performance Chart */}
+                <div className="bg-white rounded-lg shadow mb-8 p-6">
+                    <h3 className="text-lg font-semibold mb-4">Visits per Employee (Today)</h3>
+                    <div className="h-64">
+                         {chartData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={chartData}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="name" />
+                                    <YAxis allowDecimals={false} />
+                                    <Tooltip />
+                                    <Legend />
+                                    <Bar dataKey="visits" fill="#8884d8" name="Visits" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                         ) : (
+                             <div className="flex items-center justify-center h-full text-gray-500">
+                                 No data to display
+                             </div>
+                         )}
                     </div>
                 </div>
 

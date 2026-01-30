@@ -8,6 +8,12 @@ const router = express.Router();
 router.get('/daily-summary', authenticateToken, requireManager, async (req, res) => {
     try {
         const { date } = req.query;
+        
+        // Validate date format (YYYY-MM-DD)
+        if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+            return res.status(400).json({ success: false, message: 'Invalid date format. Use YYYY-MM-DD' });
+        }
+
         const targetDate = date || new Date().toISOString().split('T')[0];
 
         // Get all team members, including those who didn't check in
