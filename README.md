@@ -1,80 +1,77 @@
-# Unolo Field Force Tracker
+# Unolo Field Force Tracker - Intern Assignment
 
-A web application for tracking field employee check-ins at client locations.
+This project is a Full Stack MERN (SQLite) application for tracking field employees, managing check-ins, and generating reports.
+
+## Features Implemented
+-   **Authentication:** JWT-based Login (Manager/Employee) with secure role-based access.
+-   **Field Tracking:** Real-time check-in/out with location capture.
+-   **Real-time Distance:** Calculates distance between employee and client location using Haversine formula. Flags check-ins > 500m away.
+-   **Dashboard:**
+    -   **Manager:** View team stats, activity, and active check-ins.
+    -   **Employee:** View assigned clients, history, and perform check-ins.
+-   **Reports:** Daily Summary Report for Managers aggregating team performance.
+-   **Responsive UI:** Optimized for Mobile and Desktop.
 
 ## Tech Stack
+-   **Frontend:** React 18, Vite, TailwindCSS
+-   **Backend:** Node.js, Express.js
+-   **Database:** SQLite (with `better-sqlite3`)
+-   **Testing:** Jest, Supertest
 
-- **Frontend:** React 18, Vite, Tailwind CSS, React Router
-- **Backend:** Node.js, Express.js, SQLite
-- **Authentication:** JWT
+## Setup Instructions
 
-## Quick Start
+### Prerequisites
+-   Node.js (v18+)
+-   Git
 
-### 1. Backend Setup
+### Installation
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/Siddharth-Nama/unolo-assignment.git
+    cd unolo-assignment
+    ```
 
-```bash
-cd backend
-npm run setup    # Installs dependencies and initializes database
-cp .env.example .env
-npm run dev
-```
+2.  **Backend Setup:**
+    ```bash
+    cd backend
+    npm install
+    cp .env.example .env  # Ensure JWT_SECRET is set
+    npm run setup         # Initializes and seeds database.sqlite
+    npm run dev           # Starts server on port 3001
+    ```
 
-Backend runs on: `http://localhost:3001`
+3.  **Frontend Setup:**
+    ```bash
+    cd frontend
+    npm install
+    npm run dev           # Starts client on port 5173
+    ```
 
-### 2. Frontend Setup
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Frontend runs on: `http://localhost:5173`
-
-### Test Credentials
-
-| Role     | Email              | Password    |
-|----------|-------------------|-------------|
-| Manager  | manager@unolo.com | password123 |
-| Employee | rahul@unolo.com   | password123 |
-| Employee | priya@unolo.com   | password123 |
-
-## Project Structure
-
-```
-├── backend/
-│   ├── config/          # Database configuration
-│   ├── middleware/      # Auth middleware
-│   ├── routes/          # API routes
-│   ├── scripts/         # Database init scripts
-│   └── server.js        # Express app entry
-├── frontend/
-│   ├── src/
-│   │   ├── components/  # Reusable components
-│   │   ├── pages/       # Page components
-│   │   └── utils/       # API helpers
-│   └── index.html
-└── database/            # SQL schemas (reference only)
-```
-
-## API Endpoints
+## API Documentation
 
 ### Authentication
-- `POST /api/auth/login` - Login
-- `GET /api/auth/me` - Get current user
+-   `POST /api/auth/login`: Login with email/password. Returns JWT.
+-   `GET /api/auth/me`: Get current user profile.
 
 ### Check-ins
-- `GET /api/checkin/clients` - Get assigned clients
-- `POST /api/checkin` - Create check-in
-- `PUT /api/checkin/checkout` - Checkout
-- `GET /api/checkin/history` - Get check-in history
-- `GET /api/checkin/active` - Get active check-in
+-   `POST /api/checkin`: Check-in to a client. Requires `client_id`, `latitude`, `longitude`.
+    -   Returns `warning: true` if distance > 500m.
+-   `PUT /api/checkin/checkout`: Checkout active session.
+-   `GET /api/checkin/history`: Get check-in history.
+-   `GET /api/checkin/active`: Get current active check-in.
 
-### Dashboard
-- `GET /api/dashboard/stats` - Manager stats
-- `GET /api/dashboard/employee` - Employee stats
+### Reports (New)
+-   `GET /api/reports/daily-summary?date=YYYY-MM-DD`: Get aggregated team report for a specific date (Manager only).
 
-## Notes
+## Architectural Decisions
+-   **SQLite:** Chosen for simplicity and ACID compliance required for attendance data, avoiding overhead of MongoDB/Postgres for this scale.
+-   **Haversine Formula:** Used backend-side for reliable distance validation to prevent client-side spoofing.
+-   **JWT:** Stateless authentication allows easy horizontal scaling.
+-   **Atomic Transactions:** Check-in logic ensures only one active check-in per user.
 
-- The database uses SQLite - no external database setup required
-- Run `npm run init-db` to reset the database to initial state
+## Testing
+Run unit tests for API endpoints:
+```bash
+cd backend
+npm test
+```
