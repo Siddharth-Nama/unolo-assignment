@@ -7,24 +7,24 @@ function Dashboard({ user }) {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        fetchDashboardData();
-    }, []);
-
-    const fetchDashboardData = async () => {
-        try {
-            const endpoint = user.id === 1 ? '/dashboard/stats' : '/dashboard/employee';
-            const response = await api.get(endpoint);
-            
-            if (response.data.success) {
-                setStats(response.data.data);
+        const fetchDashboardData = async () => {
+            try {
+                const endpoint = user.id === 1 ? '/dashboard/stats' : '/dashboard/employee';
+                const response = await api.get(endpoint);
+                
+                if (response.data.success) {
+                    setStats(response.data.data);
+                }
+            } catch (err) {
+                setError('Failed to load dashboard');
+                console.error(err);
+            } finally {
+                setLoading(false);
             }
-        } catch (err) {
-            setError('Failed to load dashboard');
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
+        };
+
+        fetchDashboardData();
+    }, [user.id]);
 
     if (loading) {
         return (

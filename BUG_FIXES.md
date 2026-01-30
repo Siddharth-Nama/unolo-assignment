@@ -26,3 +26,8 @@
 - **Location:** `backend/routes/checkin.js`, Line 30
 - **Issue:** The API returned status 200 (OK) when `client_id` was missing, which is a validation error. This might mislead clients into thinking the request succeeded despite the `success: false` payload.
 - **Fix:** Changed the status code to 400 (Bad Request).
+
+## 6. React Performance/Staleness (Frontend)
+- **Location:** `frontend/src/pages/Dashboard.jsx`, Line 9
+- **Issue:** The `useEffect` hook had an empty dependency array `[]`, causing `fetchDashboardData` to be defined outside the effect and potentially leading to stale closures or missing updates if the `user` prop changed.
+- **Fix:** Moved data fetching logic inside `useEffect` and added `user.id` to the dependency array to ensure data refreshes correctly when the user context changes.
