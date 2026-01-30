@@ -1,0 +1,8 @@
+# Bug Fixes
+
+## 1. Login Logic Flaw (Backend)
+- **Location:** `backend/routes/auth.js`, Line 28
+- **Issue:** The code `const isValidPassword = bcrypt.compare(password, user.password);` was missing the `await` keyword. Since `bcrypt.compare` returns a Promise, the variable `isValidPassword` was always truthy (a Promise object), causing the `if (!isValidPassword)` check to fail. This meant **any** password would be accepted as valid.
+- **Fix:** Added `await` to the `bcrypt.compare` call.
+- **Why it works:** Now the code waits for the actual comparison result (boolean true/false) before proceeding.
+- **Additional Fix:** Removed `password` (hash) from the JWT payload for security.
