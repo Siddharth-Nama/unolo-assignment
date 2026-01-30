@@ -7,23 +7,24 @@ function Dashboard({ user }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    useEffect(() => {
-        const fetchDashboardData = async () => {
-            try {
-                const endpoint = user.id === 1 ? '/dashboard/stats' : '/dashboard/employee';
-                const response = await api.get(endpoint);
-                
-                if (response.data.success) {
-                    setStats(response.data.data);
-                }
-            } catch (err) {
-                setError('Failed to load dashboard');
-                console.error(err);
-            } finally {
-                setLoading(false);
+    const fetchDashboardData = async () => {
+        setLoading(true);
+        try {
+            const endpoint = user.id === 1 ? '/dashboard/stats' : '/dashboard/employee';
+            const response = await api.get(endpoint);
+            
+            if (response.data.success) {
+                setStats(response.data.data);
             }
-        };
+        } catch (err) {
+            setError('Failed to load dashboard');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchDashboardData();
     }, [user.id]);
 
@@ -37,8 +38,14 @@ function Dashboard({ user }) {
 
     if (error) {
         return (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                {error}
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded flex justify-between items-center">
+                <span>{error}</span>
+                <button 
+                    onClick={() => { setError(''); setLoading(true); fetchDashboardData(); }}
+                    className="text-sm bg-red-200 hover:bg-red-300 px-3 py-1 rounded"
+                >
+                    Retry
+                </button>
             </div>
         );
     }

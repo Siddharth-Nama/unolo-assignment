@@ -15,7 +15,7 @@ function CheckIn({ user }) {
     const [locationStatus, setLocationStatus] = useState('idle'); // idle, fetching, success, error
 
     const calculateDistance = (lat1, lon1, lat2, lon2) => {
-        const R = 6371e3; // Earth's radius in meters
+        const R = 6371e3; 
         const phi1 = lat1 * Math.PI / 180;
         const phi2 = lat2 * Math.PI / 180;
         const deltaPhi = (lat2 - lat1) * Math.PI / 180;
@@ -27,7 +27,7 @@ function CheckIn({ user }) {
         
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-        return R * c; // Distance in meters
+        return R * c; 
     };
 
     const currentDistance = useMemo(() => {
@@ -115,7 +115,7 @@ function CheckIn({ user }) {
                 }
                 setSelectedClient('');
                 setNotes('');
-                fetchData(); // Refresh data
+                fetchData(); 
             } else {
                 setError(response.data.message);
             }
@@ -177,7 +177,6 @@ function CheckIn({ user }) {
                 </div>
             )}
 
-            {/* Current Location Card */}
             <div className="bg-white rounded-lg shadow p-6 mb-6">
                 <div className="flex justify-between items-start">
                     <div>
@@ -234,7 +233,6 @@ function CheckIn({ user }) {
                 </div>
             )}
 
-            {/* Check-in Form */}
             {!activeCheckin && (
                 <div className="bg-white rounded-lg shadow p-6">
                     <h3 className="font-semibold mb-4">New Check-in</h3>

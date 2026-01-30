@@ -80,7 +80,10 @@ function History({ user }) {
                         <input
                             type="date"
                             value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
+                            onChange={(e) => {
+                                setStartDate(e.target.value);
+                                setError('');
+                            }}
                             className="px-3 py-2 border border-gray-300 rounded-md"
                         />
                     </div>
@@ -89,7 +92,10 @@ function History({ user }) {
                         <input
                             type="date"
                             value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
+                            onChange={(e) => {
+                                setEndDate(e.target.value);
+                                setError('');
+                            }}
                             className="px-3 py-2 border border-gray-300 rounded-md"
                         />
                     </div>
