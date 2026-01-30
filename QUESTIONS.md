@@ -1,57 +1,56 @@
-# Technical Questions
+# Technical Questions & Architecture Decisions
 
-## Q1: How would you scale the backend to handle 10,000 concurrent users?
-**Answer:**
-To scale for 10,000 concurrent users, I would adopt the following strategies:
-1.  **Horizontal Scaling:** Deploy multiple instances of the Node.js backend across several servers or containers (e.g., using Kubernetes or AWS ECS) behind a Load Balancer (Nginx/AWS ALB).
-2.  **Database Optimization:**
-    - Use Connection Pooling to manage DB connections efficiently.
-    - Implement Read Replicas for `SELECT` heavy operations (Reports/Dashboard).
-    - Index frequently queried columns (`manager_id`, `checkin_time`, `employee_id`).
-3.  **Caching:** Implement Redis to cache frequent data like "Active Check-ins" or "User Profiles" to reduce DB hits.
-4.  **Asynchronous Processing:** Offload heavy tasks (like generating complex reports) to a message queue (RabbitMQ/SQS) and worker services.
-5.  **State Management:** Ensure the backend is stateless (store sessions in Redis/JWT) so any instance can handle any request.
+## Scalability & Performance
 
-## Q2: Why is sticking the JWT in the Authorization header preferred over cookies?
-**Answer:**
-JWT in the Authorization header (`Bearer token`) is preferred because:
-1.  **Stateless API:** It aligns with REST principles where the server doesn't maintain session state.
-2.  **Cross-Domain/CORS:** Headers are easier to handle in Cross-Origin requests compared to Cookies (which require specific `SameSite` and `Secure` attributes).
-3.  **Mobile App Support:** Native mobile apps (iOS/Android) find it easier to attach headers than manage cookies.
-4.  **CSRF Protection:** Storing tokens in memory (and sending via headers) makes the app immune to CSRF attacks, whereas cookies (if invalidly configured) are vulnerable.
+### Q1: Handling 10,000 Concurrent Users
+**Strategy:**
+To scale effectively, I would move away from a monolithic single-instance approach to a **horizontally scalable architecture**.
+*   **Load Balancing:** Deploy the Node.js backend across multiple instances (using Docker/Kubernetes) behind an Nginx or AWS Application Load Balancer to distribute traffic evenly.
+*   **Database Optimization:** Implement **Connection Pooling** to prevent database overload and potential bottlenecks. For read-heavy operations like the Manager Dashboard, I would introduce **Read Replicas**.
+*   **Caching Strategy:** Integrate **Redis** to cache frequently accessed data such as User Profiles and Active Check-ins, significantly reducing direct database hits.
+*   **Async Processing:** Offload resource-intensive tasks, such as generating daily reports, to a message queue (e.g., RabbitMQ or AWS SQS) to keep the main API responsive.
 
-## Q3: How would you handle offline check-ins (when no internet)?
-**Answer:**
-To support offline check-ins:
-1.  **Local Storage:** When the device is offline, check-in data (timestamps, coordinates) should be stored locally in `IndexedDB` or `localStorage` (or `SQLite` for native apps).
-2.  **Sync Manager:** A background service (Service Worker or custom logic) should listen for network restoration events.
-3.  **Queue System:** Once online, the queued check-ins should be sent to the backend. API should accept `checkin_time` in the payload (trusting user device time, or using a "server-received" offset logic).
-4.  **Conflict Resolution:** Handle duplicate submissions (idempotency keys) and validate timestamps to prevent fraud.
+## Security & Best Practices
 
-## Q4: SQL vs NoSQL – Which one would you choose for this project and why?
-**Answer:**
-**I chose SQL (SQLite/PostgreSQL)** for this project because:
-1.  **Structured Data:** The data (Users, Clients, Check-ins) is highly structured with clear relationships (Foreign Keys).
-2.  **ACID Compliance:** Check-ins and Check-outs require strong transactional integrity. You cannot have a "Checked Out" state without a "Checked In" record.
-3.  **Complex Queries:** Features like "Daily Summary Reports" require complex `JOINs` and aggregations (e.g., joining Users, Checkins, clients), which SQL handles efficiently.
-4.  **Data Integrity:** Foreign Key constraints prevent orphaned records (e.g., a check-in for a deleted client).
+### Q2: JWT Security: Headers vs. Cookies
+**Why Authorization Headers?**
+Storing JWTs in the `Authorization` header is the industry standard for modern stateless applications for several reasons:
+*   **CSRF Protection:** Unlike cookies, headers are not automatically sent by the browser, making the application immune to Cross-Site Request Forgery (CSRF) attacks.
+*   **Mobile Compatibility:** Headers are much easier to manage in native mobile frameworks (iOS/Android) compared to cookie-based sessions.
+*   **Cross-Origin flexibility:** It simplifies CORS configurations when the frontend and backend reside on different domains (e.g., API on `api.unolo.com` and App on `dashboard.unolo.com`).
 
-## Q5: Authentication vs Authorization – Explain with an example from this app.
-**Answer:**
--   **Authentication (Who you are):** Verifying the user's identity. In this app, checking if `email` and `password` match in `/api/auth/login` is Authentication.
--   **Authorization (What you can do):** Verifying access rights. In this app, the `requireManager` middleware checks `req.user.role === 'manager'`. Only Managers are **authorized** to view expected dashboard stats or generate reports, while Employees are **authorized** only to check in/out.
+**Security Improvement:**
+To further secure the implementation, I would ensure the token has a short expiration time (e.g., 15 minutes) and implement a **Refresh Token** rotation mechanism to maintain session validity securely.
 
-## Q6: Provide a real-world example of a race condition and how to prevent it.
-**Answer:**
-**Example:** Two requests to "Check Out" the same active check-in arrive simultaneously (e.g., user double-clicks the button).
--   Request A reads "Status = Checked In".
--   Request B reads "Status = Checked In".
--   Request A updates "Status = Checked Out".
--   Request B updates "Status = Checked Out".
-This results in redundant updates or incorrect "Checkout Time" logs if logic depends on previous state.
+### Q3: Offline First Architecture
+**Implementation Plan:**
+To ensure reliability in areas with spotty internet connectivity (common for field staff):
+1.  **Local Queuing:** Use **IndexedDB** or **SQLite** (on mobile) to store check-in data locally when the network is unavailable.
+2.  **Background Sync:** Implement a **Service Worker** or use libraries like `Workbox` to detect network restoration.
+3.  **Synchronization Logic:** Once online, a background process flushes the local queue to the backend. The API would be updated to respect the original `captured_at` timestamp rather than the server's receive time to ensure accurate attendance records.
+
+## Database & Architecture
+
+### Q4: SQL vs. NoSQL Selection
+**Choice: SQL (SQLite/PostgreSQL)**
+SQL is the superior choice for a Field Force Tracker for these reasons:
+*   **Data Integrity:** The application relies heavily on relationships (Employees belong to Managers; Check-ins belong to Clients). SQL enforces these via Foreign Keys, ensuring we don't have orphaned records.
+*   **Complex Reporting:** Generating the "Daily Summary Report" requires joining multiple tables (Users, Checkins, Clients) and performing aggregations. SQL engines are optimized for these `JOIN` operations.
+*   **ACID Compliance:** Attendance data is sensitive. SQL transactions ensure that a Check-out cannot happen without a valid prior Check-in, maintaining a consistent state.
+
+## Core Concepts
+
+### Q5: Authentication vs. Authorization
+*   **Authentication (Identity):** Confirms *who* the user is.
+    *   *In Code:* The `/api/auth/login` endpoint validates credentials and issues a JWT. The `authenticateToken` middleware verifies this token to confirm identity.
+*   **Authorization (Access):** Determines *what* the user is allowed to do.
+    *   *In Code:* The `requireManager` middleware checks the `user.role`. It grants Managers access to team reports but restricts Employees to their own data.
+
+### Q6: Race Conditions & Concurrency
+**Scenario:**
+A "Double Check-out" race condition could occur if a user clicks the "Check Out" button twice rapidly. Both requests might read the status as "Checked In" and attempt to process the checkout simultaneously, leading to corrupt data or double logs.
 
 **Prevention:**
-1.  **Database Locking:** Use `SELECT ... FOR UPDATE` (Pessimistic Locking) to lock the row during the read.
-2.  **Optimistic Locking:** Include a version number or verify status in the UPDATE clause:
-    `UPDATE checkins SET status='checked_out' WHERE id=1 AND status='checked_in';`
-    If Request A succeeds, the row status changes. Request B will find 0 matching rows and fail gracefully.
+*   **Optimistic Locking:** I would modify the SQL query to conditionally update based on the expected state.
+    *   *Query:* `UPDATE checkins SET status = 'checked_out' WHERE id = ? AND status = 'checked_in'`
+    *   *Result:* The first request succeeds and changes the status. The second request finds zero rows matching the condition and fails gracefully, preserving data integrity.
