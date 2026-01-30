@@ -6,3 +6,8 @@
 - **Fix:** Added `await` to the `bcrypt.compare` call.
 - **Why it works:** Now the code waits for the actual comparison result (boolean true/false) before proceeding.
 - **Additional Fix:** Removed `password` (hash) from the JWT payload for security.
+
+## 2. Check-in SQL Error (Backend)
+- **Location:** `backend/routes/checkin.js`, Line 57
+- **Issue:** The INSERT SQL query attempted to write to columns `lat` and `lng`, but the database schema defines them as `latitude` and `longitude`. This caused an SQL error (500 Internal Server Error) upon submission.
+- **Fix:** Corrected the column names in the INSERT statement to match the schema.
