@@ -139,6 +139,7 @@ function History({ user }) {
                                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Check-in</th>
                                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Check-out</th>
                                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Duration</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Distance</th>
                                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Notes</th>
                             </tr>
                         </thead>
@@ -171,6 +172,13 @@ function History({ user }) {
                                             }`}>
                                                 {duration}
                                             </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-sm text-gray-600">
+                                            {checkin.distance_from_client 
+                                                ? <span className={checkin.distance_from_client > 500 ? 'text-red-600 font-bold' : ''}>
+                                                    {Math.round(checkin.distance_from_client)}m
+                                                  </span>
+                                                : '-'}
                                         </td>
                                         <td className="px-4 py-3 text-sm text-gray-600">
                                             {checkin.notes || '-'}

@@ -11,6 +11,7 @@ function CheckIn({ user }) {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [warning, setWarning] = useState('');
 
     useEffect(() => {
         fetchData();
@@ -58,6 +59,7 @@ function CheckIn({ user }) {
     const handleCheckIn = async (e) => {
         setError('');
         setSuccess('');
+        setWarning('');
         setSubmitting(true);
 
         try {
@@ -70,6 +72,9 @@ function CheckIn({ user }) {
 
             if (response.data.success) {
                 setSuccess('Checked in successfully!');
+                if (response.data.data.warning_message) {
+                    setWarning(response.data.data.warning_message);
+                }
                 setSelectedClient('');
                 setNotes('');
                 fetchData(); // Refresh data
@@ -125,6 +130,12 @@ function CheckIn({ user }) {
             {success && (
                 <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
                     {success}
+                </div>
+            )}
+
+            {warning && (
+                <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+                    {warning}
                 </div>
             )}
 
