@@ -16,12 +16,10 @@ function Counter({ initialValue = 0, showDouble = true }) {
 
     if (showDouble) {
         useEffect(() => {
-            console.log('Double value:', count * 2);
         }, [count]);
     }
 
     const logCount = () => {
-        console.log('Count from ref:', countRef.current);
     };
 
     const doubled = useMemo(() => {
