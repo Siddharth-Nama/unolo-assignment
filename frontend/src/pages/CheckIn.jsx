@@ -12,6 +12,7 @@ function CheckIn({ user }) {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [warning, setWarning] = useState('');
+    const [locationStatus, setLocationStatus] = useState('idle'); // idle, fetching, success, error
 
     const calculateDistance = (lat1, lon1, lat2, lon2) => {
         const R = 6371e3; // Earth's radius in meters
@@ -68,21 +69,29 @@ function CheckIn({ user }) {
     };
 
     const getCurrentLocation = () => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    setLocation({
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude
-                    });
-                },
-                (err) => {
-                    console.error('Location error:', err);
-                    // Set default location (Gurugram) for testing
-                    setLocation({ latitude: 28.4595, longitude: 77.0266 });
-                }
-            );
+        if (!navigator.geolocation) {
+            setError('Geolocation is not supported by your browser');
+            return;
         }
+
+        setLocationStatus('fetching');
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                setLocation({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude
+                });
+                setLocationStatus('success');
+            },
+            (err) => {
+                console.error('Location error:', err);
+                // Set default location (Gurugram) for testing
+                setLocation({ latitude: 28.4595, longitude: 77.0266 });
+                setLocationStatus('error');
+                setWarning('Location access denied. Using mock location (Gurugram) for testing.');
+            },
+            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
     };
 
     const handleCheckIn = async (e) => {
@@ -170,14 +179,39 @@ function CheckIn({ user }) {
 
             {/* Current Location Card */}
             <div className="bg-white rounded-lg shadow p-6 mb-6">
-                <h3 className="font-semibold mb-2">Your Current Location</h3>
-                {location ? (
-                    <p className="text-gray-600">
-                        Lat: {location.latitude.toFixed(6)}, Long: {location.longitude.toFixed(6)}
-                    </p>
-                ) : (
-                    <p className="text-gray-500">Getting location...</p>
-                )}
+                <div className="flex justify-between items-start">
+                    <div>
+                        <h3 className="font-semibold mb-2">Your Current Location</h3>
+                        {location ? (
+                            <div>
+                                <p className="text-gray-600">
+                                    Lat: {location.latitude.toFixed(6)}, Long: {location.longitude.toFixed(6)}
+                                </p>
+                                {locationStatus === 'error' && (
+                                    <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded mt-1 inline-block">
+                                        Using Mock Location
+                                    </span>
+                                )}
+                            </div>
+                        ) : (
+                            <p className="text-gray-500">
+                                {locationStatus === 'fetching' ? 'Acquiring GPS...' : 'Location not available'}
+                            </p>
+                        )}
+                    </div>
+                    <button
+                        onClick={getCurrentLocation}
+                        disabled={locationStatus === 'fetching'}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
+                    >
+                        {locationStatus === 'fetching' ? (
+                            <span className="animate-spin">↻</span>
+                        ) : (
+                            <span>📍</span>
+                        )}
+                        Refresh
+                    </button>
+                </div>
             </div>
 
             {/* Active Check-in Card */}
