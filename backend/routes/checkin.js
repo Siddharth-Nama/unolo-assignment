@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
+const { calculateDistance } = require('../utils/geo');
 
 const router = express.Router();
 
@@ -40,6 +41,27 @@ router.post('/', authenticateToken, async (req, res) => {
             return res.status(403).json({ success: false, message: 'You are not assigned to this client' });
         }
 
+        // Fetch client details for location
+        const [clients] = await pool.execute(
+            'SELECT * FROM clients WHERE id = ?',
+            [client_id]
+        );
+        const client = clients[0];
+        
+        let distance = 0;
+        let warning = false;
+
+        if (client.latitude && client.longitude && latitude && longitude) {
+            distance = calculateDistance(
+                parseFloat(latitude), parseFloat(longitude),
+                client.latitude, client.longitude
+            );
+            
+            if (distance > 500) {
+                warning = true;
+            }
+        }
+
         // Check for existing active check-in
         const [activeCheckins] = await pool.execute(
             'SELECT * FROM checkins WHERE employee_id = ? AND status = "checked_in"',
@@ -54,16 +76,19 @@ router.post('/', authenticateToken, async (req, res) => {
         }
 
         const [result] = await pool.execute(
-            `INSERT INTO checkins (employee_id, client_id, latitude, longitude, notes, status)
-             VALUES (?, ?, ?, ?, ?, 'checked_in')`,
-            [req.user.id, client_id, latitude, longitude, notes || null]
+            `INSERT INTO checkins (employee_id, client_id, latitude, longitude, distance_from_client, notes, status)
+             VALUES (?, ?, ?, ?, ?, ?, 'checked_in')`,
+            [req.user.id, client_id, latitude, longitude, distance, notes || null]
         );
 
         res.status(201).json({
             success: true,
             data: {
                 id: result.insertId,
-                message: 'Checked in successfully'
+                message: 'Checked in successfully',
+                distance: Math.round(distance),
+                warning: warning,
+                warning_message: warning ? `Warning: You are ${Math.round(distance)}m away from the client location.` : null
             }
         });
     } catch (error) {
